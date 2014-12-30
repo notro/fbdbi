@@ -38,7 +38,7 @@ struct fbdbi_display {
 	u32 xres;
 	u32 yres;
 	enum fbdbi_format format;
-	bool bgr;
+bool bgr;
 
 	int (*update)(struct fbdbi_display *display, unsigned ys, unsigned ye);
 	int (*rotate)(struct fbdbi_display *display);

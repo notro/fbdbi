@@ -609,10 +609,11 @@ pr_info("%s()\n", __func__);
 	fb_deferred_io_init(display->info);
 
 	if (!display->initialized) {
-		if (display->poweron)
+		if (display->poweron) {
 			ret = display->poweron(display);
 			if (ret)
 				return ret;
+		}
 
 		if (display->set_format) {
 			ret = display->set_format(display);

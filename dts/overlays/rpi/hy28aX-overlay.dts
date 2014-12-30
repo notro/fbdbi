@@ -1,0 +1,90 @@
+/*
+ * Device Tree overlay for hy28a
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2708";
+	
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			compatible = "brcm,bcm2835-spi"; /* spi-bcm2708 DMA can't handle multi transfers */
+			status = "okay";
+
+			spidev@0{
+				status = "disabled";
+			};
+
+			spidev@1{
+				status = "disabled";
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			hy28a_pins: hy28a_pins {
+				brcm,pins = <17 18 25>;
+				brcm,function = <0 1 1>; /* in out out */
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			hy28a: hy28a@0{
+				compatible = "hy28a";
+				reg = <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&hy28a_pins>;
+
+				spi-max-frequency = <32000000>;
+				spi-cpol;
+				spi-cpha;
+				format = "rgb565";
+				readable;
+				rotate = <270>;
+				bgr;
+				reset-gpios = <&gpio 25 0>;
+				backlight = <&backlight>;
+			};
+
+			hy28a-ts@1 {
+				compatible = "ti,ads7846";
+				reg = <1>;
+
+				spi-max-frequency = <2000000>;
+				interrupts = <17 2>; /* high-to-low edge triggered */
+				interrupt-parent = <&gpio>;
+				pendown-gpio = <&gpio 17 0>;
+				ti,x-plate-ohms = /bits/ 16 <100>;
+				ti,pressure-max = /bits/ 16 <255>;
+			};
+		};
+	};
+
+	fragment@3 {
+		target-path = "/soc";
+		__overlay__ {
+			backlight: backlight {
+				compatible = "gpio-backlight";
+				gpios = <&gpio 18 0>;
+			};
+		};
+	};
+
+	__overrides__ {
+		speed =   <&hy28a>,"spi-max-frequency:0";
+		rotate =  <&hy28a>,"rotate:0";
+	};
+};

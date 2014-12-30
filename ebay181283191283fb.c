@@ -187,6 +187,7 @@ static int ebay181283191283_probe(struct platform_device *pdev)
 
 	display->xres = 272;
 	display->yres = 480;
+	display->format = fbdbi_of_format(dev, FBDBI_FORMAT_RGB565);
 //	display->bgr = true;
 	display->poweron = ebay181283191283_poweron;
 

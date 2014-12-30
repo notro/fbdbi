@@ -84,7 +84,5 @@
 	__overrides__ {
 		speed =   <&rpidisplay>,"spi-max-frequency:0";
 		rotate =  <&rpidisplay>,"rotate:0";
-		fps =     <&rpidisplay>,"fps:0";
-		debug =   <&rpidisplay>,"debug:0";
 	};
 };

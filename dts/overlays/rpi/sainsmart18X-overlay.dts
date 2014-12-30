@@ -1,0 +1,63 @@
+/*
+ * Device Tree overlay for Sainsmart 1.8" display
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2708";
+	
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+
+			spidev@0{
+				status = "disabled";
+			};
+
+			spidev@1{
+				status = "disabled";
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			sainsmart18_pins: sainsmart18_pins {
+				brcm,pins = <23 24>;
+				brcm,function = <1 1>; /* out out */
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			sainsmart18: sainsmart18@0{
+				compatible = "sainsmart18";
+				reg = <1>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&sainsmart18_pins>;
+
+				spi-max-frequency = <32000000>;
+				format = "rgb565";
+				rotate = <0>;
+				reset-gpios = <&gpio 23 0>;
+				dc-gpios = <&gpio 24 0>;
+			};
+		};
+	};
+
+	__overrides__ {
+		speed =   <&sainsmart18>,"spi-max-frequency:0";
+		rotate =  <&sainsmart18>,"rotate:0";
+	};
+};

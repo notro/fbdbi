@@ -43,7 +43,7 @@
 			#size-cells = <0>;
 
 			pitft: pitft@0{
-				compatible = "mi0283qt";
+				compatible = "mi,mi0283qt";
 				reg = <0>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pitft_pins>;
@@ -106,7 +106,5 @@
 	__overrides__ {
 		speed =   <&pitft>,"spi-max-frequency:0";
 		rotate =  <&pitft>,"rotate:0";
-		fps =     <&pitft>,"fps:0";
-		debug =   <&pitft>,"debug:0";
 	};
 };

@@ -1,0 +1,73 @@
+/*
+ * Device Tree overlay for the old Adafruit 2.2" display
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2708";
+	
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+
+			spidev@0{
+				status = "disabled";
+			};
+
+			spidev@1{
+				status = "disabled";
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			adafruit22_pins: adafruit22_pins {
+				brcm,pins = <18 25>;
+				brcm,function = <1 1>; /* out */
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			adafruit22: adafruit22@0{
+				compatible = "adafruit797";
+				reg = <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&adafruit22_pins>;
+
+				spi-max-frequency = <32000000>;
+				rotate = <0>;
+				bgr;
+				reset-gpios = <&gpio 25 0>;
+				backlight = <&backlight>;
+			};
+		};
+	};
+
+	fragment@3 {
+		target-path = "/soc";
+		__overlay__ {
+			backlight: backlight {
+				compatible = "gpio-backlight";
+				gpios = <&gpio 18 0>;
+			};
+		};
+	};
+
+	__overrides__ {
+		speed =   <&adafruit22>,"spi-max-frequency:0";
+		rotate =  <&adafruit22>,"rotate:0";
+	};
+};
