@@ -155,16 +155,76 @@ static int ebay181283191283_poweron(struct fbdbi_display *display)
 }
 
 
+static int ebay181283191283_probe_common(struct lcdreg *lcdreg)
+{
+	struct device *dev = lcdreg->dev;
+	struct fbdbi_display *display;
+	int ret;
+
+	pr_info("%s()\n", __func__);
+	display = devm_kzalloc(dev, sizeof(*display), GFP_KERNEL);
+	if (!display)
+		return -ENOMEM;
+
+	ret = ssd1963_init(display, lcdreg);
+	if (ret)
+		return ret;
+
+	display->xres = 272;
+	display->yres = 480;
+	display->format = fbdbi_of_format(dev, FBDBI_FORMAT_RGB565);
+	display->poweron = ebay181283191283_poweron;
+
+	ret = devm_fbdbi_init(dev, display);
+	if (ret)
+		return ret;
+
+	display->info->var.rotate = fbdbi_of_value(dev, "rotate", 0);
+	display->backlight = ssd1963_backlight_register(lcdreg, display->info, 255);
+
+	return devm_fbdbi_register(display);
+}
+
+static int ebay181283191283_i80_probe(struct i80_device *i80dev)
+{
+	struct device *dev = &i80dev->dev;
+	struct lcdreg *lcdreg;
+	struct lcdreg_i80_config config = {};
+	int ret;
+
+	pr_debug("%s()\n", __func__);
+	ret = devm_lcdreg_i80_parse_dt(dev, &config);
+	if (ret)
+		return ret;
+
+	lcdreg = devm_lcdreg_i80_init(i80dev, &config);
+	if (IS_ERR(lcdreg))
+		return PTR_ERR(lcdreg);
+
+	return ebay181283191283_probe_common(lcdreg);
+}
 
 
 
+static const struct of_device_id dt_ids[] = {
+        { .compatible = "ebay181283191283" },
+        {},
+};
+MODULE_DEVICE_TABLE(of, dt_ids);
 
+static struct i80_driver ebay181283191283_i80_driver = {
+	.driver = {
+		.name   = "ebay181283191283fb",
+		.owner  = THIS_MODULE,
+                .of_match_table = of_match_ptr(dt_ids),
+	},
+	.probe  = ebay181283191283_i80_probe,
+};
 
 static int ebay181283191283_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct lcdreg *lcdreg;
-	struct fbdbi_display *display;
 	struct lcdreg_par_config config = {};
 	int ret;
 
@@ -177,37 +237,8 @@ static int ebay181283191283_probe(struct platform_device *pdev)
 	if (IS_ERR(lcdreg))
 		return PTR_ERR(lcdreg);
 
-	display = devm_kzalloc(dev, sizeof(*display), GFP_KERNEL);
-	if (!display)
-		return -ENOMEM;
-
-	ret = ssd1963_init(display, lcdreg);
-	if (ret)
-		return ret;
-
-	display->xres = 272;
-	display->yres = 480;
-	display->format = fbdbi_of_format(dev, FBDBI_FORMAT_RGB565);
-//	display->bgr = true;
-	display->poweron = ebay181283191283_poweron;
-
-	ret = devm_fbdbi_init(dev, display);
-	if (ret)
-		return ret;
-
-//	display->rotate = NULL;
-	display->info->var.rotate = fbdbi_of_value(dev, "rotate", 0);
-
-	display->backlight = ssd1963_backlight_register(lcdreg, display->info, 255);
-
-	return devm_fbdbi_register(display);
+	return ebay181283191283_probe_common(lcdreg);
 }
-
-static const struct of_device_id dt_ids[] = {
-        { .compatible = "ebay181283191283" },
-        {},
-};
-MODULE_DEVICE_TABLE(of, dt_ids);
 
 static struct platform_driver ebay181283191283_driver = {
 	.driver = {
@@ -217,11 +248,32 @@ static struct platform_driver ebay181283191283_driver = {
 	},
 	.probe  = ebay181283191283_probe,
 };
-module_platform_driver(ebay181283191283_driver);
 
-//MODULE_ALIAS("spi:" DRVNAME);
-//MODULE_ALIAS("spi:tinylcd");
+static int __init ebay181283191283fb_init(void)
+{
+	int ret;
 
-//MODULE_DESCRIPTION("Custom FB driver for tinylcd.com display");
+	pr_info("%s()\n", __func__);
+	ret = platform_driver_register(&ebay181283191283_driver);
+	if (ret)
+		return ret;
+
+	ret = i80_driver_register(&ebay181283191283_i80_driver);
+	if (ret)
+		platform_driver_unregister(&ebay181283191283_driver);
+
+	return ret;
+}
+module_init(ebay181283191283fb_init);
+
+static void __exit ebay181283191283fb_exit(void)
+{
+	pr_info("%s()\n", __func__);
+	platform_driver_unregister(&ebay181283191283_driver);
+	i80_driver_unregister(&ebay181283191283_i80_driver);
+}
+module_exit(ebay181283191283fb_exit);
+
+/* MODULE_DESCRIPTION(""); */
 MODULE_AUTHOR("Noralf Tronnes");
 MODULE_LICENSE("GPL");
