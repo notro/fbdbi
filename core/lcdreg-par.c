@@ -1,4 +1,4 @@
-#define DEBUG
+//#define DEBUG
 
 #include <linux/delay.h>
 #include <linux/device.h>
@@ -37,7 +37,6 @@ static int lcdreg_par_transfer(struct lcdreg *reg, struct lcdreg_transfer *trans
 	unsigned len = transfer->count;
 	int i;
 
-	lcdreg_dbg_write(reg->dev, __func__, transfer);
 	if (par->cs)
 		gpiod_set_value(par->cs, 0);
 
@@ -119,7 +118,6 @@ static int lcdreg_par_read(struct lcdreg *reg, unsigned regnr, struct lcdreg_tra
 	unsigned len = transfer->count;
 	int i, ret;
 
-	lcdreg_dbg_read_in(reg->dev, __func__, transfer);
 	if (!reg->readable)
 		return -EACCES;
 
@@ -153,7 +151,6 @@ static int lcdreg_par_read(struct lcdreg *reg, unsigned regnr, struct lcdreg_tra
 		gpiod_set_value(par->cs, 1);
 
 	ret = lcdreg_par_direction(reg, false);
-	lcdreg_dbg_read_out(reg->dev, __func__, transfer);
 
 	return ret;
 }

@@ -160,12 +160,7 @@ static inline struct gpio_desc *lcdreg_gpiod_get(struct device *dev, const char 
 struct lcdreg *devm_lcdreg_init(struct device *dev,
 					 struct lcdreg *reg);
 
-
-static inline int lcdreg_write(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer)
-{
-	return reg->write(reg, regnr, transfer);
-}
-
+extern int lcdreg_write(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer);
 extern int lcdreg_write_buf32(struct lcdreg *reg, unsigned regnr, const u32 *data, unsigned count);
 
 #define lcdreg_writereg(lcdreg, regnr, seq...) \
@@ -174,13 +169,7 @@ extern int lcdreg_write_buf32(struct lcdreg *reg, unsigned regnr, const u32 *dat
         lcdreg_write_buf32(lcdreg, regnr, d, ARRAY_SIZE(d));\
 })
 
-static inline int lcdreg_read(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer)
-{
-	if (!transfer->width)
-		transfer->width = reg->def_width;
-	return reg->read(reg, regnr, transfer);
-}
-
+extern int lcdreg_read(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer);
 extern int lcdreg_readreg_buf32(struct lcdreg *reg, unsigned regnr, u32 *buf,
 								unsigned count);
 
@@ -268,28 +257,5 @@ do {                                                                 \
 #else
 #define lcdreg_dbg_transfer_buf(transfer)
 #endif /* DEBUG || CONFIG_DYNAMIC_DEBUG */
-
-#define lcdreg_dbg_transfer(dev, prefix, prefix2,  transfer)                  \
-do {                                                                          \
-	dev_dbg(dev, "%s%s: index=%u, count=%u, width=%u\n", prefix, prefix2, \
-		transfer->index, transfer->count, transfer->width);           \
-} while(0)
-
-#define lcdreg_dbg_read_in(dev, prefix, transfer)            \
-do {                                                         \
-	lcdreg_dbg_transfer(dev, prefix, "(in)",  transfer); \
-} while(0)
-
-#define lcdreg_dbg_read_out(dev, prefix, transfer) \
-do {                                               \
-	dev_dbg(dev, "%s(out):\n", prefix);        \
-	lcdreg_dbg_transfer_buf(transfer);         \
-} while(0)
-
-#define lcdreg_dbg_write(dev, prefix, transfer)          \
-do {                                                     \
-	lcdreg_dbg_transfer(dev, prefix, "",  transfer); \
-	lcdreg_dbg_transfer_buf(transfer);               \
-} while(0)
 
 #endif /* __LINUX_LCDREG_H */

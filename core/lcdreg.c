@@ -1,3 +1,5 @@
+//#define DEBUG
+
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/export.h>
@@ -333,6 +335,20 @@ void lcdreg_debugfs_exit(struct lcdreg *reg)
 	debugfs_remove_recursive(reg->debugfs);
 }
 
+int lcdreg_write(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer)
+{
+	if (!transfer->width)
+		transfer->width = reg->def_width;
+
+	dev_dbg(reg->dev,
+		"lcdreg_write: regnr=0x%02x, index=%u, count=%u, width=%u\n",
+		regnr, transfer->index, transfer->count, transfer->width);
+	lcdreg_dbg_transfer_buf(transfer);
+
+	return reg->write(reg, regnr, transfer);
+}
+EXPORT_SYMBOL(lcdreg_write);
+
 /**
  * @reg - lcdreg
  * @regnr - Rgister number
@@ -364,6 +380,25 @@ int lcdreg_write_buf32(struct lcdreg *reg, unsigned regnr, const u32 *data, unsi
 	return ret;
 }
 EXPORT_SYMBOL(lcdreg_write_buf32);
+
+int lcdreg_read(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer)
+{
+	int ret;
+
+	if (!transfer->width)
+		transfer->width = reg->def_width;
+
+	dev_dbg(reg->dev,
+		"lcdreg_read: regnr=0x%02x, index=%u, count=%u, width=%u\n",
+		regnr, transfer->index, transfer->count, transfer->width);
+
+	ret = reg->read(reg, regnr, transfer);
+
+	lcdreg_dbg_transfer_buf(transfer);
+
+	return ret;
+}
+EXPORT_SYMBOL(lcdreg_read);
 
 int lcdreg_readreg_buf32(struct lcdreg *reg, unsigned regnr, u32 *buf,
 							unsigned count)

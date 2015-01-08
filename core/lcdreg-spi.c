@@ -1,5 +1,5 @@
-#define VERBOSE_DEBUG
-#define DEBUG
+//#define VERBOSE_DEBUG
+//#define DEBUG
 
 #include <asm/unaligned.h>
 #include <linux/delay.h>
@@ -122,7 +122,9 @@ lcdreg_spi_transfer(struct lcdreg *reg, struct lcdreg_transfer *transfer)
 	int ret, i = 0;
 	struct list_head *pos;
 
-	lcdreg_dbg_write(reg->dev, __func__, transfer);
+	dev_dbg(reg->dev, "%s: index=%u, count=%u, width=%u\n",
+		__func__, transfer->index, transfer->count, transfer->width);
+	lcdreg_dbg_transfer_buf(transfer);
 
 	if (transfer->index == 1 && len > 128 && dma)
 		do_dma = true;
@@ -237,8 +239,6 @@ transfer_out:
 static int lcdreg_spi_write_one(struct lcdreg *reg, struct lcdreg_transfer *transfer)
 {
 	struct lcdreg_spi *spi = to_lcdreg_spi(reg);
-
-	lcdreg_dbg_write(reg->dev, __func__, transfer);
 
 	if (spi->dc)
 		gpiod_set_value_cansleep(spi->dc, transfer->index);
@@ -398,7 +398,6 @@ static int lcdreg_spi_write_9bit_dc(struct lcdreg *reg, struct lcdreg_transfer *
 	int pad, i, ret;
 
 width = transfer->width;
-	lcdreg_dbg_write(reg->dev, __func__, transfer);
 
 	if (width != 8 && width != 16) {
 		dev_err(reg->dev, "transfer width %u is not supported\n",
@@ -563,8 +562,6 @@ static int lcdreg_spi_read_startbyte(struct lcdreg *reg, unsigned regnr, struct 
 printk("\n\n\n");
 
 	transfer->width = transfer->width ? : reg->def_width;
-	lcdreg_dbg_read_in(reg->dev, __func__, transfer);
-
 	if (WARN_ON(transfer->width != 16 || !transfer->count))
 		return -EINVAL;
 
@@ -608,7 +605,6 @@ printk("\n\n\n");
 		rxbuf += 2;
 	}
 	kfree(trrx.rx_buf);
-	lcdreg_dbg_read_out(reg->dev, __func__, transfer);
 
 	return 0;
 }
@@ -634,8 +630,6 @@ static int lcdreg_spi_read(struct lcdreg *reg, unsigned regnr, struct lcdreg_tra
 printk("\n\n\n");
 
 	transfer->width = transfer->width ? : reg->def_width;
-	lcdreg_dbg_read_in(reg->dev, __func__, transfer);
-
 	if (WARN_ON(transfer->width != reg->def_width || !transfer->count))
 		return -EINVAL;
 
@@ -705,8 +699,6 @@ printk("\n\n\n");
 						(trrx.bits_per_word == 16))
 		for (i = 0; i < transfer->count; i++)
 			((u16 *)transfer->buf)[i] = be16_to_cpu(((u16 *)transfer->buf)[i]);
-
-	lcdreg_dbg_read_out(reg->dev, __func__, transfer);
 
 	return 0;
 }
