@@ -22,6 +22,8 @@
 #include <linux/platform_device.h>
 #include <linux/spi/spi.h>
 
+#include "../i80/i80.h"
+
 
 /**
  * struct lcdreg_transfer - LCD register transfer
@@ -143,6 +145,11 @@ struct lcdreg_par_config {
 	struct gpio_desc *db[24];
 };
 
+struct lcdreg_i80_config {
+	unsigned def_width;
+	struct gpio_desc *reset;
+};
+
 
 
 /* http://lxr.free-electrons.com/ident?i=IS_ENABLED */
@@ -215,6 +222,11 @@ extern int devm_lcdreg_par_parse_dt(struct device *dev,
 					struct lcdreg_par_config *config);
 struct lcdreg *devm_lcdreg_par_init(struct platform_device *pdev,
 				    const struct lcdreg_par_config *config);
+
+extern int devm_lcdreg_i80_parse_dt(struct device *dev,
+					struct lcdreg_i80_config *config);
+struct lcdreg *devm_lcdreg_i80_init(struct i80_device *i80dev,
+				    const struct lcdreg_i80_config *config);
 
 
 //#else

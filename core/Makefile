@@ -7,3 +7,4 @@ obj-m += fbdbi.o
 obj-m += lcdreg.o
 obj-m += lcdreg-spi.o
 obj-m += lcdreg-par.o
+obj-m += lcdreg-i80.o
