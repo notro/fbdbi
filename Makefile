@@ -5,6 +5,7 @@ ifneq ($(KERNELRELEASE),)
 -include $(src)/.config
 
 obj-y                           += core/
+obj-y                           += i80/
 
 obj-m += hy28afb.o
 obj-m += sainsmart18fb.o
