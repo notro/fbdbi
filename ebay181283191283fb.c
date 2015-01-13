@@ -222,59 +222,7 @@ static struct i80_driver ebay181283191283_i80_driver = {
 	},
 	.probe  = ebay181283191283_i80_probe,
 };
-
-static int ebay181283191283_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct lcdreg *lcdreg;
-	struct lcdreg_par_config config = {};
-	int ret;
-
-	pr_info("%s()\n", __func__);
-	ret = devm_lcdreg_par_parse_dt(dev, &config);
-	if (ret)
-		return ret;
-
-	lcdreg = devm_lcdreg_par_init(pdev, &config);
-	if (IS_ERR(lcdreg))
-		return PTR_ERR(lcdreg);
-
-	return ebay181283191283_probe_common(lcdreg);
-}
-
-static struct platform_driver ebay181283191283_driver = {
-	.driver = {
-		.name   = "ebay181283191283fb",
-		.owner  = THIS_MODULE,
-                .of_match_table = of_match_ptr(dt_ids),
-	},
-	.probe  = ebay181283191283_probe,
-};
-
-static int __init ebay181283191283fb_init(void)
-{
-	int ret;
-
-	pr_info("%s()\n", __func__);
-	ret = platform_driver_register(&ebay181283191283_driver);
-	if (ret)
-		return ret;
-
-	ret = i80_driver_register(&ebay181283191283_i80_driver);
-	if (ret)
-		platform_driver_unregister(&ebay181283191283_driver);
-
-	return ret;
-}
-module_init(ebay181283191283fb_init);
-
-static void __exit ebay181283191283fb_exit(void)
-{
-	pr_info("%s()\n", __func__);
-	platform_driver_unregister(&ebay181283191283_driver);
-	i80_driver_unregister(&ebay181283191283_i80_driver);
-}
-module_exit(ebay181283191283fb_exit);
+module_i80_driver(ebay181283191283_i80_driver);
 
 /* MODULE_DESCRIPTION(""); */
 MODULE_AUTHOR("Noralf Tronnes");
