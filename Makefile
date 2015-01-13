@@ -15,6 +15,7 @@ obj-m += ssd1963.o
 obj-m += ili9320.o
 obj-m += mipi-dbi.o
 obj-m += mi0283qtfb.o
+obj-m += itdb02-28fb.o
 
 
 else

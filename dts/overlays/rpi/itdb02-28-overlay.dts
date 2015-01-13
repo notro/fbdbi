@@ -1,0 +1,59 @@
+/*
+ * Device Tree overlay for the ITDB02-2.8 display
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2708";
+	
+	fragment@0 {
+		target = <&gpio>;
+		__overlay__ {
+			i80_gpio_pins: i80_gpio_pins {
+				brcm,pins = <2 3 7 8 9 11 17 18 23 24 25 27>;
+				brcm,function = <1>; /* out */
+			};
+		};
+	};
+
+	fragment@1 {
+		target-path = "/soc";
+		__overlay__ {
+			i80_gpio: i80_gpio {
+				compatible = "i80-gpio";
+				pinctrl-names = "default";
+				pinctrl-0 = <&i80_gpio_pins>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				address-gpios = <&gpio  3 0>, /* RS */
+						<&gpio 27 1>; /* /CS */
+				wr-gpios = <&gpio  2 0>;
+				rd-gpios = <&gpio 22 0>;
+				data-gpios = <&gpio  9 0>, /* DB08 */
+					     <&gpio 11 0>, /* DB09 */
+					     <&gpio 18 0>, /* DB10 */
+					     <&gpio 23 0>, /* DB11 */
+					     <&gpio 24 0>, /* DB12 */
+					     <&gpio 25 0>, /* DB13 */
+					     <&gpio  8 0>, /* DB14 */
+					     <&gpio  7 0>; /* DB15 */
+
+				itdb02_28: itdb02_28 {
+					compatible = "itead,itdb02-28";
+					reg = <0x2 2>;
+			
+					rotate = <0>;
+					reset-gpios = <&gpio 17 0>;
+				};
+			};
+		};
+	};
+
+	__overrides__ {
+		rotate =  <&itdb02_28>,"rotate:0";
+	};
+};
