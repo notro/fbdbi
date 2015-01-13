@@ -1,7 +1,7 @@
 //#define DEBUG
 
 /*
- * Intel 8080/8086 Bus GPIO implementation
+ * i80 gpiolib implementation
  *
  * Copyright (C) 2015 Noralf Tronnes
  *

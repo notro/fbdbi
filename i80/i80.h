@@ -1,4 +1,6 @@
 /*
+ * Intel 8080 compatible bus interface
+ *
  * Copyright (C) 2015 Noralf Tronnes
  *
  * This program is free software; you can redistribute it and/or modify

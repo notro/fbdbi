@@ -1,7 +1,7 @@
 //#define DEBUG
 
 /*
- * Intel 8080/8086 Bus
+ * Intel 8080 compatible bus interface
  *
  * Copyright (C) 2015 Noralf Tronnes
  *
