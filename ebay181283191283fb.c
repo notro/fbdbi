@@ -147,8 +147,10 @@ static int ebay181283191283_poweron(struct fbdbi_display *display)
 
 		printk("\n\n\n\n");
 
-		for (i = 0x0a; i <= 0x0e; i++)
+		for (i = 0x0a; i <= 0x0e; i++) {
 			lcdreg_readreg_buf32(lcdreg, i, &val, 1);
+			printk("readreg 0x%02x: 0x%02x\n", i, val);
+		}
 	}
 
 	return 0;
