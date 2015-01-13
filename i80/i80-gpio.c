@@ -125,14 +125,20 @@ static int i80_gpio_write(struct i80_device *i80, void *buf, size_t len)
 	i80gpio->curr_data = ~0;
 
 	if (width > 16) {
-		return -EINVAL;
+		u32 *buf32 = buf;
+
+		for (i = 0; i < len / 4; i++)
+			i80_gpio_write_val(i80gpio, *buf32++);
 	} else if (width > 8) {
 		u16 *buf16 = buf;
 
 		for (i = 0; i < len / 2; i++)
 			i80_gpio_write_val(i80gpio, *buf16++);
 	} else {
-		return -EINVAL;
+		u8 *buf8 = buf;
+
+		for (i = 0; i < len; i++)
+			i80_gpio_write_val(i80gpio, *buf8++);
 	}
 
 	return 0;
@@ -163,7 +169,12 @@ static int i80_gpio_read(struct i80_device *i80, void *buf, size_t len)
 		return ret;
 
 	if (width > 16) {
-		return -EINVAL;
+		u32 *buf32 = buf;
+
+		for (i = 0; i < len / 4; i++) {
+			i80_gpio_read_val(i80gpio, &val);
+			*buf32++ = val;
+		}
 	} else if (width > 8) {
 		u16 *buf16 = buf;
 
@@ -172,7 +183,12 @@ static int i80_gpio_read(struct i80_device *i80, void *buf, size_t len)
 			*buf16++ = val;
 		}
 	} else {
-		return -EINVAL;
+		u8 *buf8 = buf;
+
+		for (i = 0; i < len; i++) {
+			i80_gpio_read_val(i80gpio, &val);
+			*buf8++ = val;
+		}
 	}
 
 	return 0;
