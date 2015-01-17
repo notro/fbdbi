@@ -18,6 +18,7 @@ obj-m += ssd1306.o
 
 obj-m += mi0283qtfb.o
 obj-m += itdb02-28fb.o
+obj-m += adafruit13fb.o
 
 
 else
