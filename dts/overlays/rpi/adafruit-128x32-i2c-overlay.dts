@@ -1,0 +1,45 @@
+/*
+ * Raspberry Pi Device Tree overlay
+ *
+ * Adafruit
+ * Monochrome 128x32 I2C OLED graphic display
+ * Product id: 931
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2708";
+	
+	fragment@0 {
+		target = <&gpio>;
+		__overlay__ {
+			ssd1306_pins: ssd1306_pins {
+				brcm,pins = <4>;
+				brcm,function = <1>; /* out */
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&i2c1>;
+		__overlay__ {
+			status = "okay";
+
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ssd1306: ssd1306@1{
+				compatible = "ada,ssd1306-128x32";
+				reg = <0x3c>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&ssd1306_pins>;
+
+				reset-gpios = <&gpio 4 0>;
+			};
+		};
+	};
+};
