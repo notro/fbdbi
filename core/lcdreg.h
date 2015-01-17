@@ -18,6 +18,7 @@
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
 #include <linux/mutex.h>
 #include <linux/platform_device.h>
 #include <linux/spi/spi.h>
@@ -135,21 +136,10 @@ u8 startbyte;
 	struct gpio_desc *reset;
 };
 
-struct lcdreg_par_config {
-	unsigned def_width;
-	struct gpio_desc *reset;
-	struct gpio_desc *dc;
-	struct gpio_desc *wr;
-	struct gpio_desc *rd;
-	struct gpio_desc *cs;
-	struct gpio_desc *db[24];
-};
-
 struct lcdreg_i80_config {
 	unsigned def_width;
 	struct gpio_desc *reset;
 };
-
 
 
 /* http://lxr.free-electrons.com/ident?i=IS_ENABLED */
@@ -167,8 +157,10 @@ static inline struct gpio_desc *lcdreg_gpiod_get(struct device *dev, const char 
 struct lcdreg *devm_lcdreg_init(struct device *dev,
 					 struct lcdreg *reg);
 
-extern int lcdreg_write(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer);
-extern int lcdreg_write_buf32(struct lcdreg *reg, unsigned regnr, const u32 *data, unsigned count);
+extern int lcdreg_write(struct lcdreg *reg, unsigned regnr,
+			struct lcdreg_transfer *transfer);
+extern int lcdreg_write_buf32(struct lcdreg *reg, unsigned regnr,
+			      const u32 *data, unsigned count);
 
 #define lcdreg_writereg(lcdreg, regnr, seq...) \
 ({\
@@ -176,9 +168,10 @@ extern int lcdreg_write_buf32(struct lcdreg *reg, unsigned regnr, const u32 *dat
         lcdreg_write_buf32(lcdreg, regnr, d, ARRAY_SIZE(d));\
 })
 
-extern int lcdreg_read(struct lcdreg *reg, unsigned regnr, struct lcdreg_transfer *transfer);
+extern int lcdreg_read(struct lcdreg *reg, unsigned regnr,
+		       struct lcdreg_transfer *transfer);
 extern int lcdreg_readreg_buf32(struct lcdreg *reg, unsigned regnr, u32 *buf,
-								unsigned count);
+				unsigned count);
 
 static inline void lcdreg_reset(struct lcdreg *reg)
 {
@@ -203,8 +196,9 @@ static inline bool lcdreg_is_readable(struct lcdreg *reg)
 struct lcdreg *devm_lcdreg_spi_init(struct spi_device *sdev,
 				    const struct lcdreg_spi_config *config);
 extern int devm_lcdreg_spi_parse_dt(struct device *dev,
-					struct lcdreg_spi_config *config);
-static inline struct lcdreg *devm_lcdreg_spi_init_dt(struct spi_device *sdev, enum lcdreg_spi_mode mode)
+				    struct lcdreg_spi_config *config);
+static inline struct lcdreg *devm_lcdreg_spi_init_dt(struct spi_device *sdev,
+						     enum lcdreg_spi_mode mode)
 {
 	struct lcdreg_spi_config spicfg = {
 		.mode = mode,
@@ -218,15 +212,12 @@ static inline struct lcdreg *devm_lcdreg_spi_init_dt(struct spi_device *sdev, en
 	return devm_lcdreg_spi_init(sdev, &spicfg);
 }
 
-extern int devm_lcdreg_par_parse_dt(struct device *dev,
-					struct lcdreg_par_config *config);
-struct lcdreg *devm_lcdreg_par_init(struct platform_device *pdev,
-				    const struct lcdreg_par_config *config);
-
 extern int devm_lcdreg_i80_parse_dt(struct device *dev,
-					struct lcdreg_i80_config *config);
+				    struct lcdreg_i80_config *config);
 struct lcdreg *devm_lcdreg_i80_init(struct i80_device *i80dev,
 				    const struct lcdreg_i80_config *config);
+
+struct lcdreg *devm_lcdreg_i2c_init(struct i2c_client *client);
 
 
 //#else

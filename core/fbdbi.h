@@ -43,7 +43,7 @@ bool bgr;
 	int (*update)(struct fbdbi_display *display, unsigned ys, unsigned ye);
 	int (*rotate)(struct fbdbi_display *display);
 	int (*set_format)(struct fbdbi_display *display);
-	int (*blank)(struct fbdbi_display *display, bool on);
+	int (*blank)(struct fbdbi_display *display, bool blank);
 	int (*poweron)(struct fbdbi_display *display);
 	int (*poweroff)(struct fbdbi_display *display);
 
