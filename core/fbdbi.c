@@ -547,6 +547,7 @@ pr_info("%s(xres=%u, yres=%u)\n", __func__, display->xres, display->yres);
 		info->var.green.offset = 0;
 		info->var.blue.length = 1;
 		info->var.blue.offset = 0;
+		break;
 	case FBDBI_FORMAT_RGB565:
 		info->var.bits_per_pixel = 16;
 		vmem_size *= 2;

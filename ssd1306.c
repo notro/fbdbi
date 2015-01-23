@@ -1,18 +1,9 @@
 //#define DEBUG
 
-/* TODO: what about contrast?
-
-10.1.7 Set Contrast Control for BANK0 (81h)
-This command sets the Contrast Setting of the display. The chip has 256 contrast steps from 00h to FFh. The
-segment output current increases as the contrast step value increases. 
-
-*/
-
-
 /*
  * SSD1306 LCD controller support
  *
- * Copyright 2015 Noralf Tronnes
+ * Copyright 2015 Noralf Trønnes
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +14,12 @@ segment output current increases as the contrast step value increases.
 #include <linux/module.h>
 
 #include "ssd1306.h"
+
+/*
+ * TODO: contrast control is not implemented
+ *       If gamma control is to be user configurable, maybe the same
+ *       mechanism can be used for contrast.
+ */
 
 struct ssd1306_controller {
 	struct fbdbi_display display;
@@ -37,7 +34,7 @@ static inline struct ssd1306_controller *to_controller(struct fbdbi_display *dis
 static int ssd1306_update(struct fbdbi_display *display, unsigned ys, unsigned ye)
 {
 	struct lcdreg *lcdreg = display->lcdreg;
-	u16 *vmem16 = (u16 *)display->info->screen_base;
+	struct fb_var_screeninfo *var = &display->info->var;
 	u8 *buf = to_controller(display)->buf;
 	int x, y, i;
 	int ret;
@@ -45,20 +42,50 @@ static int ssd1306_update(struct fbdbi_display *display, unsigned ys, unsigned y
 		.index = 1,
 		.width = 8,
 		.buf = buf,
-		.count = display->info->var.xres * display->info->var.yres / 8,
+		.count = var->xres * var->yres / 8,
 	};
 
-	pr_debug("%s(ys=%u, ye=%u): xres=%u, yres=%u\n", __func__, ys, ye, display->info->var.xres, display->info->var.yres);
+	pr_debug("%s(ys=%u, ye=%u): xres=%u, yres=%u\n", __func__, ys, ye, var->xres, var->yres);
 
 	lcdreg_lock(lcdreg);
-	for (x = 0; x < display->info->var.xres; x++) {
-		for (y = 0; y < display->info->var.yres/8; y++) {
-			*buf = 0x00;
-			for (i = 0; i < 8; i++)
-				*buf |= (vmem16[(y * 8 + i) * display->info->var.xres + x] ? 1 : 0) << i;
-			buf++;
+
+	/*
+	 * RGB565 is implemented on this monochrome controller for 2 reasons:
+	 * 1. sys_imageblit and friends doesn't honour 
+	 *    CONFIG_FB_CFB_REV_PIXELS_IN_BYTE which results in mirrored or
+	 *    garbeled fonts using fbcon on systems like the Raspberry Pi.
+	 * 2. Very few applications and no grahics libraries supports
+	 *    monochrome framebuffers.
+	 */
+	if (display->format == FBDBI_FORMAT_RGB565) {
+		u16 *vmem16 = (u16 *)display->info->screen_base;
+
+		/* TODO: add better conversion as done in fb_agm1264k-fl */
+		for (x = 0; x < var->xres; x++) {
+			for (y = 0; y < var->yres / 8; y++) {
+				*buf = 0x00;
+				for (i = 0; i < 8; i++)
+					*buf |= (vmem16[(y * 8 + i) * var->xres + x] ? 1 : 0) << i;
+				buf++;
+			}
+		}
+	} else { /* FBDBI_FORMAT_MONO10 */
+		u8 *vmem8 = (u8 *)display->info->screen_base;
+
+		for (x = 0; x < var->xres; x++) {
+			for (y = 0; y < var->yres / 8; y++) {
+				*buf = 0x00;
+				for (i = 0; i < 8; i++) {
+					int y1 = y * 8 + i;
+					int idx = (y1 * (var->xres / 8)) + (x / 8);
+					int mask = (1 << (7 - (x % 8)));
+					*buf |= (vmem8[idx] & mask ? 1 : 0) << i;
+				}
+				buf++;
+			}
 		}
 	}
+
 	ret = lcdreg_write(lcdreg, SSD1306_DISPLAY_START_LINE, &tr);
 	lcdreg_unlock(lcdreg);
 
@@ -72,6 +99,22 @@ static int ssd1306_blank(struct fbdbi_display *display, bool blank)
 							SSD1306_DISPLAY_ON);
 }
 
+static int ssd1306_set_format(struct fbdbi_display *display)
+{
+	pr_debug("%s(): format=%i, bits_per_pixel=%u\n", __func__, display->format, display->info->var.bits_per_pixel);
+
+	switch (display->format) {
+	case FBDBI_FORMAT_MONO10:
+		break;
+	case FBDBI_FORMAT_RGB565:
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int ssd1306_poweroff(struct fbdbi_display *display)
 {
 	pr_debug("%s()\n", __func__);
@@ -83,18 +126,20 @@ static int ssd1306_poweroff(struct fbdbi_display *display)
 static const struct fbdbi_display ssd1306_display = {
 	.update = ssd1306_update,
 	.blank = ssd1306_blank,
+	.set_format = ssd1306_set_format,
 	.poweroff = ssd1306_poweroff,
 };
 
 struct fbdbi_display *devm_ssd1306_init(struct lcdreg *lcdreg,
-					 struct ssd1306_config *config)
+					struct ssd1306_config *config)
 {
 	struct ssd1306_controller *controller;
 	struct fbdbi_display *display;
 
 	pr_debug("%s()\n", __func__);
 
-	controller = devm_kzalloc(lcdreg->dev, sizeof(*controller), GFP_KERNEL);
+	controller = devm_kzalloc(lcdreg->dev, sizeof(*controller),
+				  GFP_KERNEL);
 	if (!controller)
 		return ERR_PTR(-ENOMEM);
 
@@ -104,9 +149,11 @@ struct fbdbi_display *devm_ssd1306_init(struct lcdreg *lcdreg,
 	display->lcdreg->def_width = 8;
 	display->xres = config->xres ? : 128;
 	display->yres = config->yres ? : 64;
-	display->format = FBDBI_FORMAT_RGB565;
+	display->format = FBDBI_FORMAT_MONO10;
 
-	controller->buf = devm_kzalloc(lcdreg->dev, display->xres * display->yres / 8, GFP_KERNEL);
+	controller->buf = devm_kzalloc(lcdreg->dev,
+				       display->xres * display->yres / 8,
+				       GFP_KERNEL);
 	if (!controller->buf)
 		return ERR_PTR(-ENOMEM);
 

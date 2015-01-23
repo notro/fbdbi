@@ -136,6 +136,7 @@ static int adafruit13_probe_common(struct lcdreg *lcdreg)
 	if (IS_ERR(display))
 		return PTR_ERR(display);
 
+	display->format = fbdbi_of_format(dev, FBDBI_FORMAT_RGB565);
 	display->poweron = adafruit13_poweron;
 
 	return devm_fbdbi_register_dt(dev, display);
